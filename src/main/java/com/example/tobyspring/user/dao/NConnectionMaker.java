@@ -4,11 +4,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class NUserDao extends UserDao{
+public class NConnectionMaker implements ConnectionMaker{
 
     @Override
-    public Connection getConnection() throws SQLException, ClassNotFoundException {
-
+    public Connection makeConnection() throws ClassNotFoundException, SQLException {
         // N사 DB connection 생성 코드
         Class.forName("com.mysql.cj.jdbc.Driver");
 
@@ -16,5 +15,4 @@ public class NUserDao extends UserDao{
             .getConnection("jdbc:mysql://localhost/spring?serverTimezone=UTC&useSSL=false", "root",
                 "2495");
     }
-
 }

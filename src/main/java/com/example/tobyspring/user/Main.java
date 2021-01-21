@@ -1,6 +1,7 @@
 package com.example.tobyspring.user;
 
-import com.example.tobyspring.user.dao.NUserDao;
+import com.example.tobyspring.user.dao.ConnectionMaker;
+import com.example.tobyspring.user.dao.NConnectionMaker;
 import com.example.tobyspring.user.dao.UserDao;
 import com.example.tobyspring.user.domain.User;
 import java.sql.SQLException;
@@ -8,7 +9,9 @@ import java.sql.SQLException;
 public class Main {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        UserDao dao = new NUserDao();
+        ConnectionMaker nConnectionMaker = new NConnectionMaker();
+
+        UserDao dao = new UserDao(nConnectionMaker);
 
         User user = new User();
         user.setId("spring");

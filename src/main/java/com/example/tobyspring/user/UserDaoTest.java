@@ -6,12 +6,10 @@ import com.example.tobyspring.user.dao.UserDao;
 import com.example.tobyspring.user.domain.User;
 import java.sql.SQLException;
 
-public class Main {
+public class UserDaoTest {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        ConnectionMaker nConnectionMaker = new NConnectionMaker();
-
-        UserDao dao = new UserDao(nConnectionMaker);
+        UserDao dao = new DaoFactory().userDao();
 
         User user = new User();
         user.setId("spring");

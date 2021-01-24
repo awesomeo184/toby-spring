@@ -13,7 +13,7 @@ public class UserDaoTest {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
 
-        ApplicationContext context = new GenericXmlApplicationContext("ApplicationContext.xml");
+        ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
 
         UserDao dao = context.getBean("userDao", UserDao.class);
 

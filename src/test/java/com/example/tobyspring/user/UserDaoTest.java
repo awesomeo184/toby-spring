@@ -20,18 +20,22 @@ public class UserDaoTest {
         userDao.deleteAll();
         assertThat(userDao.getCount()).isEqualTo(0);
 
-        User user = new User();
-        user.setId("awesomeo");
-        user.setName("정수현");
-        user.setPassword("awesome!");
+        User user1 = new User("awesome", "정수현", "awesome!");
+        User user2 = new User("ppippo", "삐뽀", "ppap");
 
-        userDao.add(user);
+        userDao.add(user1);
         assertThat(userDao.getCount()).isEqualTo(1);
 
-        User user2 = userDao.get(user.getId());
-        assertThat(user.getId()).isEqualTo(user2.getId());
-        assertThat(user.getName()).isEqualTo(user2.getName());
-        assertThat(user.getPassword()).isEqualTo(user2.getPassword());
+        userDao.add(user2);
+        assertThat(userDao.getCount()).isEqualTo(2);
+
+        User userGet1 = userDao.get(user1.getId());
+        assertThat(userGet1.getName()).isEqualTo(user1.getName());
+        assertThat(userGet1.getPassword()).isEqualTo(user1.getPassword());
+
+        User userGet2 = userDao.get(user2.getId());
+        assertThat(userGet2.getName()).isEqualTo(user2.getName());
+        assertThat(userGet2.getPassword()).isEqualTo(user2.getPassword());
     }
 
     @Test
@@ -54,7 +58,6 @@ public class UserDaoTest {
 
         userDao.add(user3);
         assertThat(userDao.getCount()).isEqualTo(3);
-
 
     }
 

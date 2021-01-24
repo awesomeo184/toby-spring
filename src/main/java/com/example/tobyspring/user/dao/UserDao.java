@@ -14,6 +14,7 @@ public class UserDao {
         this.dataSource = dataSource;
     }
 
+
     public void add(User user) throws SQLException {
         Connection c = dataSource.getConnection();
 

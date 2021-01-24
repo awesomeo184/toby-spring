@@ -16,6 +16,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.21'
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '3.0.7.RELEASE'
+    testImplementation("org.assertj:assertj-core:3.18.1")
 
 }
 

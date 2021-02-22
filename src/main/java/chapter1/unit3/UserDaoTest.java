@@ -5,7 +5,7 @@ import java.sql.SQLException;
 public class UserDaoTest {
 
     public static void main(String[] args) throws SQLException {
-        UserDao dao = new DUserDao();
+        UserDao dao = new UserDao();
 
         User user = new User();
         user.setId("whiteship");

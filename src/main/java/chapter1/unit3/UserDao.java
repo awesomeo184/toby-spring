@@ -10,7 +10,7 @@ public class UserDao {
     private SimpleConnectionMaker simpleConnectionMaker;
 
     public UserDao() {
-        simpleConnectionMaker = new SimpleConnectionMaker();
+        simpleConnectionMaker = new DConnectionMaker();
     }
 
     public void add(User user) throws SQLException {

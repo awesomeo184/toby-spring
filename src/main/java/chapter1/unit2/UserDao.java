@@ -6,12 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class UserDao {
+public abstract class UserDao {
 
     public void add(User user) throws SQLException {
-        Connection con = DriverManager.getConnection(
-            "jdbc:mysql://localhost:3306/spring", "root", "2495"
-        );
+        Connection con = getConnection();
 
         PreparedStatement ps = con
             .prepareStatement("insert into users (id, name, password) values (?,?,?)");
@@ -27,9 +25,7 @@ public class UserDao {
     }
 
     public User get(String id) throws SQLException {
-        Connection con = DriverManager.getConnection(
-            "jdbc:mysql://localhost:3306/spring", "root", "2495"
-        );
+        Connection con = getConnection();
 
         PreparedStatement ps = con
             .prepareStatement("select * from users where id = ?");
@@ -49,5 +45,7 @@ public class UserDao {
 
         return user;
     }
+
+    public abstract Connection getConnection() throws SQLException;
 
 }

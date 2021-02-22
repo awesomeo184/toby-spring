@@ -9,8 +9,8 @@ public class UserDao {
 
     private SimpleConnectionMaker simpleConnectionMaker;
 
-    public UserDao() {
-        simpleConnectionMaker = new DConnectionMaker();
+    public UserDao(SimpleConnectionMaker simpleConnectionMaker) {
+        this.simpleConnectionMaker = simpleConnectionMaker;
     }
 
     public void add(User user) throws SQLException {

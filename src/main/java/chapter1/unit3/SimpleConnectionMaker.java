@@ -5,6 +5,5 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public interface SimpleConnectionMaker {
-
-    public Connection makeConnection() throws SQLException;
+    Connection makeConnection() throws SQLException;
 }

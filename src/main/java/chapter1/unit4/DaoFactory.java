@@ -7,4 +7,13 @@ public class DaoFactory {
         return new UserDao(connectionMaker);
     }
 
+    public AccountDao accountDao() {
+        SimpleConnectionMaker connectionMaker = new DConnectionMaker();
+        return new AccountDao(connectionMaker);
+    }
+
+    public MessageDao messageDao() {
+        SimpleConnectionMaker connectionMaker = new DConnectionMaker();
+        return new MessageDao(connectionMaker);
+    }
 }

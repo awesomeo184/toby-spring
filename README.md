@@ -209,13 +209,13 @@ UserDao의 클라이언트에서 메서드 파라미터나 생성자 파라미�
 통해서 ConnectionMaker 객체를 전달받도록 코드를 수정한 뒤 메인 메서드에서 구체적인 객체를 전달해보자.
 
 ```java
-public class UserDao { 
-    
-  private SimpleConnectionMaker simpleConnectionMaker;
+public class UserDao {
 
-  public UserDao(SimpleConnectionMaker simpleConnectionMaker) {
-    this.simpleConnectionMaker = simpleConnectionMaker;
-  }
+    private SimpleConnectionMaker simpleConnectionMaker;
+
+    public UserDao(SimpleConnectionMaker simpleConnectionMaker) {
+        this.simpleConnectionMaker = simpleConnectionMaker;
+    }
   ...
 }
 ```
@@ -223,11 +223,11 @@ public class UserDao {
 ```java
 public class UserDaoTest {
 
-  public static void main(String[] args) throws SQLException {
-    DConnectionMaker connectionMaker = new DConnectionMaker();
-    UserDao dao = new UserDao(connectionMaker);
+    public static void main(String[] args) throws SQLException {
+        DConnectionMaker connectionMaker = new DConnectionMaker();
+        UserDao dao = new UserDao(connectionMaker);
     ...
-  }
+    }
 }
 ```
 
@@ -238,7 +238,7 @@ public class UserDaoTest {
 >
 > 응집도가 높다는 것은 하나의 관심사가 하나의 모듈에 집중되어 있다는 것이다. 응집도가 높으면 변경사항이 일어나도 몇 개의 모듈만 수정하면 된다.
 > 응집도가 낮을수록 하나의 관심사가 여러 모듈에 퍼져있기 때문에 하나의 변경사항을 적용하기 위해 수많은 모듈을 수정해야 한다. 이는 당연히 버그의 발생률을 높인다.
-> 
+>
 > 결합도는 의존성과 관련이 있는데, 결합도란 '하나의 오브젝트가 변경이 일어날 때에 관계를 맺고 있는 다른 오브젝트에게 변화를 요구하는 정도'라고 말할 수 있다.
 > 결합도가 높을수록 변경에 따르는 작업량이 많아지고 당연히 버그의 발생률도 높아진다.
 > 결합도를 낮추기 위해서는 모듈 간의 연결을 느슨하게 유지해야 하는데, 인터페이스로 모듈을 연결해주면 결합이 느슨해진다.
@@ -246,10 +246,74 @@ public class UserDaoTest {
 > 대해서도 관심이 없다. 인터페이스를 통해 결합도를 낮춰주었기 때문이다.
 
 > 전략패턴
-> 
+>
 > 개선한 UserDaoTest-UserDao-ConnectionMaker 구조를 디자인 패턴의 시각으로 보면 **전략 패턴**이라고 볼 수 있다.
 > 전략 패턴은 자신의 기능 맥락에서, 필요에 따라 변경이 필요한 알고리즘을 인터페이스를 통해 통째로 외부로 분리시키고, 이를 구현한
 > 구체적인 알고리즘 클래스를 필요에 따라 바꿔서 사용할 수 있게 하는 디자인 패턴이다.
 > 예시의 UserDaoTest에서 ConnectionMaker를 필요에 따라 NConnectionMaker, DConnectionMaker로 바꿔가면서
 > UserDao에게 전달할 수 있는 것처럼 말이다.
 
+### 1.4 제어의 역전(IoC)
+
+지금까지 UserDao를 리팩토링하면서 신경쓰지 않은 것이 한 가지 있는데, 바로 UserDaoTest이다.
+UserDaoTest는 지금까지 UserDao가 담당하던 기능, 즉 어떤 ConnectionMaker의 구현클래스를 사용할지 담당하던 역할을 엉겁결에 떠맡았다.
+
+원래 UserDaoTest는 UserDao가 잘 동작하는지 확인하기 위해 만든 것인데 다른 책임을 떠안게 되었다. 그러므로 이 기능도 독립적으로 분리해보자.
+
+**팩토리**
+객체의 생성 방법을 결정하고 그렇게 만들어진 오브젝트를 돌려주는 역할을 하는 오브젝트를 흔히 **팩토리**라고 부른다.
+이는 디자인 패턴에서 말하는 특별한 문제를 해결하기 위해 사용되는 추상 팩토리 패턴이나, 팩토리 메서드 패턴과는 다르니 혼동하지 말자.
+단지 오브젝트를 생성하는 쪽과 생성된 오브젝트를 사용하는 쪽의 역할과 책임을 깔끔하게 분리하려는 목적으로 사용하는 것이다.
+
+팩토리 역할을 맡을 클래스를 DaoFactory라고 하자.
+*DaoFactory.java*
+```java
+public class DaoFactory {
+
+    public UserDao userDao() {
+        SimpleConnectionMaker connectionMaker = new DConnectionMaker();
+        return new UserDao(connectionMaker);
+    }
+}
+```
+```java
+public class UserDaoTest {
+
+    public static void main(String[] args) throws SQLException {
+        UserDao dao = new DaoFactory().userDao();
+        ...
+    }
+}
+```
+
+UserDao와 ConncetionMaker는 각각 애플리케이션의 데이터 로직과 기술 로직을 담당하고, DaoFactory는 이런 애플리케이션의
+오브젝트들을 구성하고 그 관계를 정의하는 책임을 맡고 있다. DaoFactory는 애플리케이션을 구성하는 컴포넌트들의 관계를 정의한 설계도라고 볼 수 있다.
+
+이제 N사와 D사에 UserDao를 공급할 때, UserDao, ConnectionMaker와 함께 DaoFactory도 함께 제공한다.
+UserDao와 달리 DaoFactory는 소스코드를 제공한다. 새로운 관계가 필요하면 DaoFactory를 직접 수정한다.
+
+DaoFactory를 분리했을 때 얻을 수 있는 장점은 매우 다양하다. 그 중에서도 컴포넌트를 담당하는 오브젝트와 애플리케이션의 구조를 결정하는 오브젝트를
+분리했다는 데 가장 의미가 있다.
+
+이제 **제어의 역전**이라는 개념에 대해 알아보자. 제어의 역전이란 프로그램의 제어 흐름이 뒤바뀐다는 것이다.
+
+일반적인 프로그램의 제어 흐름은
+1)프로그램의 시작 지점(일반적으로 main 메서드)에서 다음에 사용할 오브젝트를 결정하고, 2)결정한 오브젝트를 생성하고
+3)오브젝트에 있는 메서드를 호출하고 4)그 오브젝트 메서드 안에서 다음에 사용할 것을 결정하고 호출하는 식의 작업이 반복된다.
+
+이런 흐름에서 각 오브젝트는 자신이 사용할 오브젝트를 직접 생성한다.
+UserDao가 자신이 사용할 ConnectionMaker를 직접 생성했던 것처럼 말이다.
+
+제어의 역전이란 이런 제어 흐름의 개념을 거꾸로 뒤집는 것이다. 제어의 역전에서는 오브젝트가 자신이 사용할 오브젝트를 스스로 선택하지 않는다.
+모든 제어의 권한은 자신이 아닌 다른 대상에게 위임한다. 예시에서는 DaoFactory가 모든 제어권을 가지고 있다.
+
+프레임워크와 라이브러리를 구분짓는 핵심이 제어의 역전이다.
+라이브러리는 프로그래머가 실행 흐름을 설계하고 필요한 코드를 라이브러리에서 가져다 쓴다.
+프레임워크는 프로그래머가 작성한 코드를 프레임워크의 실행 흐름안에서 프레임워크가 가져다 쓴다.
+
+우리가 관심을 분리하고 책임을 나누고 유연하게 확장 가능한 구조로 만들기 위해 DaoFactory를 도입했던 과정이 바로 IoC를 적용하는 작업이었다.
+IoC는 특별한게 아니다. 객체 지향의 원칙을 지키면서 설계를 할 때, 자연스럽게 IoC 구조를 갖추게된다.
+
+제어의 역전에서는 프레임워크 또는 컨테이너와 같이 애플리케이션 컴포넌트의 생성과 관계설정, 시용, 생명주기 관리 등을 관장하는 존재가 필요하다.
+DaoFactory는 오브젝트 수준의 가장 단순한 IoC 컨테이너 내지는 IoC 프레임워크라고 불릴 수 있다.
+IoC를 애플리케이션 전반에 걸쳐 본격적으로 적용하려면 스프링의 도움을 받는 것이 훨씬 유리하다.

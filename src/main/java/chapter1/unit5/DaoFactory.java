@@ -1,14 +1,17 @@
 package chapter1.unit5;
 
-import chapter1.unit4.AccountDao;
-import chapter1.unit4.MessageDao;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class DaoFactory {
 
+    @Bean
     public UserDao userDao() {
         return new UserDao(connectionMaker());
     }
 
+    @Bean
     public SimpleConnectionMaker connectionMaker() {
         return new DConnectionMaker();
     }

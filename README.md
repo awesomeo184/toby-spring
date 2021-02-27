@@ -24,8 +24,8 @@
 
 #### 분리
 
-변경에 대한 요청은 한가지 관심사에 대해서만 일어난다. 따라서 하나의 관심사는 한 구역에 몰아 넣어야, 변경 요청이 있을 때 여러군데를 손 봐야하는 일이 생기지 않는다. DB
-접속용 암호를 변경하라는 요청이 들어왔는데, 클래스를 수백개 고쳐야하는 상황이 발생해서는 안되지 않는가.
+변경에 대한 요청은 한가지 관심사에 대해서만 일어난다. 따라서 하나의 관심사는 한 구역에 몰아 넣어야, 변경 요청이 있을 때 여러군데를 손봐야하는 일이 생기지 않는다. DB 접속용
+암호를 변경하라는 요청이 들어왔는데, 클래스를 수백개 고쳐야하는 상황이 발생해서는 안되지 않는가.
 
 관심이 같은 것끼리는 모으고, 관심이 다른 것은 떨어뜨려놓는 관심사의 분리(Separation of Concerns)를 잘 지켜야 한다.
 
@@ -271,6 +271,7 @@ public class UserDaoTest {
 원래 UserDaoTest는 UserDao가 잘 동작하는지 확인하기 위해 만든 것인데 다른 책임을 떠안게 되었다. 그러므로 이 기능도 독립적으로 분리해보자.
 
 **팩토리**
+
 객체의 생성 방법을 결정하고 그렇게 만들어진 오브젝트를 돌려주는 역할을 하는 오브젝트를 흔히 **팩토리**라고 부른다. 이는 디자인 패턴에서 말하는 특별한 문제를 해결하기 위해
 사용되는 추상 팩토리 패턴이나, 팩토리 메서드 패턴과는 다르니 혼동하지 말자. 단지 오브젝트를 생성하는 쪽과 생성된 오브젝트를 사용하는 쪽의 역할과 책임을 깔끔하게 분리하려는
 목적으로 사용하는 것이다.
@@ -433,7 +434,7 @@ DaoFactory를 직접 사용하는 것과 @Configuration 애너테이션을 붙�
 먼저 애플리케이션 컨텍스트를 통해 생성되는 빈은 항상 동일한 객체이다. 아래의 테스트 코드를 보자
 
 ```java
-public class ApplicationContextSingletonTest {
+class ApplicationContextSingletonTest {
 
     @Test
     @DisplayName("애플리케이션 컨텍스트를 통해 조회한 빈은 싱글톤이다.")
@@ -441,6 +442,7 @@ public class ApplicationContextSingletonTest {
         DaoFactory daoFactory = new DaoFactory();
         UserDao factoryDao1 = daoFactory.userDao();
         UserDao factoryDao2 = daoFactory.userDao();
+
         assertThat(factoryDao1).isNotSameAs(factoryDao2);
 
         ApplicationContext ac = new AnnotationConfigApplicationContext(DaoFactory.class);
@@ -495,11 +497,12 @@ public class StatefulService {
 
 위 객체를 멀티스레드 환경에서 싱글톤으로 관리할 경우 반드시 문제가 일어난다.
 
-상태가 없는 방식으로 클래스를 만드는 경우에 각 요청에 대한 정보나, DB, 서버의 리소스 등으로부터 생성한 정보는 어떻게 다뤄야할까?
-이때는 파라미터와 로컬 변수, 리턴 값 등을 이용하면 된다. 메서드 파라미터나, 메서드 안에서 생성되는 로컬 변수는 매번 새로운 값을 저장할
-독립적인 공간이 만들어지기 때문에 싱글톤이라고 해도 여러 스레드가 변수의 값을 덮어쓸 일은 없다.
+상태가 없는 방식으로 클래스를 만드는 경우에 각 요청에 대한 정보나, DB, 서버의 리소스 등으로부터 생성한 정보는 어떻게 다뤄야할까? 이때는 파라미터와 로컬 변수, 리턴 값 등을
+이용하면 된다. 메서드 파라미터나, 메서드 안에서 생성되는 로컬 변수는 매번 새로운 값을 저장할 독립적인 공간이 만들어지기 때문에 싱글톤이라고 해도 여러 스레드가 변수의 값을
+덮어쓸 일은 없다.
 
 *무상태(stateless)*
+
 ```java
 public class UserDao {
 
@@ -513,14 +516,14 @@ public class UserDao {
         Connection con = simpleConnectionMaker.makeConnection();
         
         ...
-        
+
         User user = new User();
         user.setId(rs.getString("id"));
         user.setName(rs.getString("name"));
         user.setPassword(rs.getString("password"));
         
         ...
-        
+
         return user;
     }
 
@@ -531,6 +534,7 @@ public class UserDao {
 <br />
 
 *유상태(stateful)*
+
 ```java
 public class UserDao {
 
@@ -546,34 +550,290 @@ public class UserDao {
         this.c = simpleConnectionMaker.makeConnection();
         
         ...
-        
+
         this.user = new User();
         this.user.setId(rs.getString("id"));
         this.user.setName(rs.getString("name"));
         this.user.setPassword(rs.getString("password"));
         
         ...
-        
+
         return user;
     }
 
 }
 ```
 
-위의 Stateless Object와 Stateful Object를 비교해보자. SimpleConnectionMaker 타입의 인터페이스는 왜 두 곳 모두에서 인스턴스 변수로 정의해 사용할까?
-이것은 인스턴스 변수를 사용해도 상관없다. 왜냐하면 SimpleConnectionMaker는 읽기전용의 정보이기 때문이다. 이 변수에는 ConnectionMaker 타입의 싱글톤 오브젝트가 들어있다.
-이 connectionMaker도 @Bean 애너테이션을 붙여서 싱글톤으로 관리하기 때문에 기본적으로 오브젝트 한 개만 만들어져 UserDao의 connectionMaker 인스턴스 필드에 저장된다.
+위의 Stateless Object와 Stateful Object를 비교해보자. SimpleConnectionMaker 타입의 인터페이스는 왜 두 곳 모두에서 인스턴스 변수로
+정의해 사용할까? 이것은 인스턴스 변수를 사용해도 상관없다. 왜냐하면 SimpleConnectionMaker는 읽기전용의 정보이기 때문이다. 이 변수에는
+ConnectionMaker 타입의 싱글톤 오브젝트가 들어있다. 이 connectionMaker도 @Bean 애너테이션을 붙여서 싱글톤으로 관리하기 때문에 기본적으로 오브젝트 한
+개만 만들어져 UserDao의 connectionMaker 인스턴스 필드에 저장된다.
 
-이렇게 자신이 사용하는 다른 싱글톤 빈을 저장하려는 용도라면 인스턴스 필드로 저장해서 사용해도 상관없다. 물론 단순 읽기 전용 값이라면 static이나 final을 붙여서 사용하는 것이 바람직하다.
+이렇게 자신이 사용하는 다른 싱글톤 빈을 저장하려는 용도라면 인스턴스 필드로 저장해서 사용해도 상관없다. 물론 단순 읽기 전용 값이라면 static이나 final을 붙여서 사용하는
+것이 바람직하다.
 
 <br />
 
 **스프링 빈의 스코프**
-스프링이 관리하는 오브젝트, 즉 빈이 생성되고, 존재하고, 적용되는 범위에 대해 알아보자. 스프링에서는 이것을 **빈의 스코프(scope)**라고 한다.
-스프링 빈의 기본 스코프는 싱글톤이다. 싱글톤 스코프는 컨테이너 내에 한 개의 오브젝트만 만들어져서, 강제로 제거하지 않는 한 스프링 컨테이너가
-존재하는 동안 계속 유지된다.
 
-경우에 따라서는 싱글톤 외의 스코프를 가질 수 있다. 대표적으로 프로토타입(prototype) 스코프가 있다. 프로토타입은 싱글톤과 달리 컨테이너에 빈을 요청할 때마다
-매번 새로운 오브젝트를 만들어준다. 그 웨에도 웹을 통해 새로운 HTTP 요청이 생길 때마다 생성되는 요청(request) 스코프가 있고, 웹의 세션과 스코프가 유사한 세션(session) 스코프도 있다.
+스프링이 관리하는 오브젝트, 즉 빈이 생성되고, 존재하고, 적용되는 범위에 대해 알아보자. 스프링에서는 이것을 **빈의 스코프(scope)**라고 한다. 스프링 빈의 기본 스코프는
+싱글톤이다. 싱글톤 스코프는 컨테이너 내에 한 개의 오브젝트만 만들어져서, 강제로 제거하지 않는 한 스프링 컨테이너가 존재하는 동안 계속 유지된다.
+
+경우에 따라서는 싱글톤 외의 스코프를 가질 수 있다. 대표적으로 프로토타입(prototype) 스코프가 있다. 프로토타입은 싱글톤과 달리 컨테이너에 빈을 요청할 때마다 매번 새로운
+오브젝트를 만들어준다. 그 웨에도 웹을 통해 새로운 HTTP 요청이 생길 때마다 생성되는 요청(request) 스코프가 있고, 웹의 세션과 스코프가 유사한 세션(session)
+스코프도 있다.
+
+<br />
+
+### 1.7 의존관계 주입(Dependency Injection)
+
+IoC라는 용어가 매우 느슨하게 정의되어 있기 때문에 스프링을 IoC 컨테이너라고만 표현해서는 스프링이 제공하는 기능의 특징을 명확하게 설명하지 못한다. 스프링이 서블릿
+컨테이너처럼 서버에서 동작하는 서비스 컨테이너라는 뜻인지, 아니면 단순히 IoC 개념이 적용된 템플릿 메서드 패턴을 이용해 만들어진 프레임워크인지, 아니면 또 다른 IoC 특징을
+지닌 기술이라는 것인지 파악하기 힘들다. 그래서 스프링이 제공하는 IoC 방식의 핵심을 짚어주는 용어인 **의존관계 주입(Dependency Injection)** 이라는 용어가
+탄생했다.
+
+스프링 IoC 기능의 대표적인 동작원리는 주로 의존관계 주입이라고 불린다. 스프링이 컨테이너고 프레임워크이기 때문에 기본적인 동작원리가 모두 IoC라고 할 수 있지만 스프링이 여타
+프레임워크와 차별화돼서 제공해주는 기능은 의존관계 주입이라는 용어를 사용할 때 더 분명하게 드러난다. 그래서 초기에는 주로 IoC 컨테이너라고 불리던 스프링이 지금은 의존관계 주입
+컨테이너 혹은 DI 컨테이너라고 더 많이 불리고 있다.
+
+<br />
+
+**의존관계**
+
+의존관계란 무엇인가? 두 클래스 혹은 두 모듈 사이의 의존관계를 이야기할 때는 반드시 방향성을 이야기해야 한다. 즉 "누가 누구에게 의존하고 있는 관계이다" 하는 식으로
+말해야한다. A가 B에게 의존하고 있다는 것은, B의 변화가 A에게 영향을 미친다는 것이다. 쉽게 생각하면 A가 B를 알고 있으면 A는 B에 의존하는 것이다. 코드를 통해
+살펴보자.
+
+```java
+class A {
+
+    private B b = new B();
+
+    public void methodA() {
+        b.methodB();
+    }
+}
+
+class B {
+
+    public void methodB() {
+        ...
+    }
+}
+```
+
+클래스 A 안에 B에 대한 내용이 있다. 즉 A는 B를 알고 있다. 만약 클래스 B에 정의된 methodB()의 시그니쳐가 바뀐다면 클래스 A도 변경되어야 한다. 이를 "A가 B에
+의존한다"라고 표현한다. 아까 말했듯이 의존관계에는 방향성이 있다. A는 B에 의존하지만, B는 A에 의존하지 않는다.
+
+**UserDao의 의존관계**
+
+우리가 작업했던 예시를 보자. UserDao는 ConnectionMaker에 의존한다.
+
+```java
+public class UserDao {
+
+    private ConnectionMaker connectionMaker;
+
+    public UserDao(ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
+
+    public void add(User user) throws SQLException {
+        Connection con = connectionMaker.makeConnection();
+        ...
+    }
+}
+```
+
+ConnectionMaker가 직접 변경된다면 이에 의존하는 UserDao도 변경되어야 한다. 하지만 ConnectionMaker의 구현체인 DConnectionMaker가
+변경된다고 해서 UserDao를 변경해야하는 일은 없다. 이는 코드 레벨, 즉 컴파일 타임에서 UserDao와 DConnectionMaker 사이의 의존관계가 없기 때문이다.
+
+이렇게 인터페이스에 대해서만 의존관계를 만들어두면 인터페이스 구현 클래스와의 관계는 느슨해지면서 변화에 영향을 덜 받는 상태가 된다. 즉 결합도가 낮아진다. 이렇게 코드 레벨에서
+드러나는 의존관계 말고, 런타임에서 드러나는 관계도 있다. 이를 런타임 의존관계 또는 오브젝트 의존관계라고 한다. UserDao와 DConnectionMaker 사이의 관계가
+그러하다. 코드를 작성한 개발자는 UserDao가 런타임에 사용하는 ConnectionMaker의 구현체가 DConnectionMaker라는 것을 알고 있지만, 이는 UML 등의
+설계에는 드러나지 않는다. 프로그램이 시작되고 UserDao 오브젝트가 만들어지고 나서 런타임 시에 의존관계를 맺는 대상, 즉 실제 사용대상인 오브젝트를 의존 오브젝트(
+dependent object)라고 한다.
+
+의존관계 주입은 이렇게 구체적인 의존 오브젝트와 그것을 사용할 주체, 보통 클라이언트라고 부르는 오브젝트를 런타임 시에 연결해주는 작업을 말한다. 정리하자면 의존관계 주입이란
+다음과 같은 세 가지 조건을 충족하는 작업을 말한다.
+
+* 클래스 모델이나 코드에는 런타임 시점의 의존관계가 드러나지 않는다. 그러기 위해서는 인터페이스에만 의존하고 있어야 한다.
+* 런타임 시점의 의존관계는 컨테이너나 팩토리 같은 제 3의 존재가 결정한다.
+* 의존관계는 사용할 오브젝트에 대한 레퍼런스를 외부에서 제공(주입)해줌으로써 만들어진다.
+
+의존관계 주입의 핵심은 **설계 시점에서는 알지 못했던 두 오브젝트의 관계를 맺도록 도와주는 제 3의 존재가 있다는 것**이다. 전략 패턴에 등장하는 클라이언트나 앞에서 만들었던
+DaoFactory, 또 DaoFactory와 같은 작업을 일반화해서 만들어졌다는 스프링의 애플리케이션 컨텍스트, 빈 팩토리, IoC 등이 모두 외부에서 오브젝트 사이의 런타임
+관계를 맺어주는 책임을 지닌 제 3의 존재라고 볼 수 있다.
+
+<br />
+
+**의존관계 검색과 주입**
+
+스프링이 제공하는 IoC 방법에는 의존관계 주입만 있는 것이 아니다. 코드에서는 구체적인 클래스에 의존하지 않고, 런타임 시에 의존관계를 결정한다는 점에서 의존관계 주입과
+비슷하지만, 의존관계를 맺는 방법이 외부로부터의 주입이 아니라 스스로 검색을 이용하기 때문에 의존관계 검색(dependency lookup)이라고 불리는 것도 있다. 의존관계
+검색은 자신이 필요로 하는 의존 오브젝트를 능동적으로 찾는다. 물론 자신이 어떤 클래스의 오브젝트를 이용할지 결정하지는 않는다. 그러면 IoC라고 할 수는 없을 것이다.
+
+아래의 코드를 보자
+
+```java
+public class UserDao {
+
+    public UserDao() {
+        DaoFactory daoFactory = new DaoFactory();
+        this.connectionMaker = daoFactory.connectionMaker();
+    }
+}
+```
+
+이렇게 해도 여전히 UserDao가 어떤 오브젝트를 사용할지는 알지 못한다. 단지 인터페이스에 의존하고 있을 뿐이다. 런타임 시에 daoFactory가 반환하는 오브젝트와
+다이내믹하게 런타임 의존관계를 맺는다. 따라서 IoC 개념을 잘 따르고 있다. 하지만 적용 방법은 외부로부터의 주입이 아니라 스스로 IoC 컨테이너인 DaoFactory에게
+요청하는 것이다.
+
+스프링의 IoC 컨테이너인 애플리케이션 컨텍스트는 getBean()이라는 메서드를 제공한다. 바로 이 메서드가 의존관계 검색에 사용되는 것이다. 이 애플리케이션 컨텍스트를 사용해서
+의존관계 검색 방식으로 ConnectionMaker 오브젝트를 가져오게 만들 수도 있다.
+
+```java
+public class UserDao {
+
+    public UserDao() {
+        ApplicationContext ac = new AnnotationConfigApplicationContext(DaoFactory.class);
+        this.connectionMaker = ac.connectionMaker();
+    }
+}
+```
+
+<br />
+
+그렇다면 의존관계 주입과 의존관계 검색 중에 어떤 것이 더 나을까? 의존관계 검색 방법은 코드 안에 오브젝트 팩토리나 스프링 API가 나타난다. 애플리케이션 컴포넌트가 컨테이너와
+같이 성격이 다른 오브젝트에 의존하는 것은 그다지 바람직하지 않다. 따라서 대개는 의존관계 주입을 사용하는 것이 좋다.
+
+그러나 의존관계 검색 방식을 사용해야 할 때도 있다.
+
+```java
+public class UserDaoTest {
+
+    public static void main(String[] args) throws SQLException {
+
+        ApplicationContext ac = new AnnotationConfigApplicationContext(DaoFactory.class);
+        UserDao dao = ac.getBean("userDao", UserDao.class);
+        ...
+    }
+}
+```
+
+위 코드의 경우 스태틱 메서드인 main 메서드가 DI를 이용해 오브젝트를 주입받을 수 있는 방법이 없다. 서버에서도 마찬가지다. 서버에는 main()과 같은 기동 메서드는
+없지만, 사용자의 요청을 받을 때마다 main() 메서드와 비슷한 역할을 하는 서블릿에서 스프링 컨테이너에 담긴 오브젝트를 사용하려면 한 번은 의존관계 검색 방식을 사용해
+오브젝트를 가져와야 한다. 다행히 이런 서블릿은 이미 스프링이 만들어서 제공하기 때문에 사용자가 직접 구현할 일은 없다.
+
+의존관계 검색과 의존관계 주입의 중요한 차이 중 하나는 **의존관계 검색 방식에서는 검색하는 오브젝트는 자신이 스프링의 빈일 필요가 없다는 점이다.**
+UserDao에 getBean을 통해 ConnectionMaker를 검색하려면 ConnectionMaker만 빈이기만 하면 된다.
+
+반면에 UserDao와 ConnectionMaker 사이에 DI가 적용되려면 UserDao도 반드시 컨테이너가 만드는 빈 오브젝트여야 한다.
+
+<br />
+
+**의존관계 주입의 응용**
+
+DI 기술의 장점은 무엇일까? 앞서 살펴본대로 객체지향의 원칙을 잘 따르면 자연스레 DI 방식을 구현하게 된다. 이때 가질 수 있는 구체적인 장점에는 이런 것이 있다.
+
+1.기능 구현의 교환
+
+UserDao는 ConnectionMaker 인터페이스에 의존하고 있으므로, UserDao의 코드 변경 없이 ConnectionMaker의 구현 오브젝트를 교체할 수 있다. 예를
+들어 개발 중에는 H2를 사용하고 실제 서비스 할때는 Oracle을 사용한다고 해보자. UserDao에서 H2 오브젝트를 직접 생성했다면 서비스 할 때, 이와 관련된 코드를 모두
+수정해야한다. DI 방식을 적용할 경우, DB 교체를 위해 수정해야할 코드는 단 한 줄이다.
+
+```java
+    @Bean
+public ConnectionMaker connectionMaker(){
+    return new H2ConnectionMaker();
+    }
+```
+
+↓
+
+```java
+    @Bean
+public ConnectionMaker connectionMaker(){
+    return new OracleConnectionMaker();
+    }
+```
+
+2.부가기능 추가 DAO가 DB 연결을 얼마나 많이 하는지 파악해야할 일이 생겼다고 쳐보자. 모든 DAO의 makeConnection() 메서드를 호출하는 부분에 새로 추가한
+카운터를 증가시키는 코드를 넣어야 할까? 분석 작업이 끝나면 다시 코드를 제거하고? 그것은 엄청난 낭비이고 노가다다. 또 DB 연결 횟수를 세는 것은 DAO의 관심사항이 아니다.
+어떻게든 분리돼야 할 책입이기도 하다.
+
+DI 컨테이너에서라면 아주 간단한 방법으로 가능하다. DAO와 DB 커넥션을 만드는 오브젝트 사이에 연결횟수를 카운팅하는 오브젝트를 하나 더 추가하는 것이다.
+
+```java
+public class CountingConnectionMaker implements ConnectionMaker {
+
+    int counter = 0;
+    private ConnectionMaker realConnectionMaker;
+
+    public CountingConnectionMaker(ConnectionMaker realConnectionMaker) {
+        this.realConnectionMaker = realConnectionMaker;
+    }
+
+    @Override
+    public Connection makeConnection() throws SQLException {
+        this.counter++;
+        return realConnectionMaker.makeConnection();
+    }
+
+    public int getCounter() {
+        return counter;
+    }
+}
+```
+
+이렇게 ConnectionMaker를 구현하는 오브젝트를 하나 만들어주고 실제로 DB 연결에 사용될 오브젝트를 주입받는다. makeConnection 메서드를 통해 이를 다시
+반환해준다.
+
+<br />
+
+```java
+
+@Configuration
+public class CountingDaoFactory {
+
+    @Bean
+    public UserDao userDao() {
+        return new UserDao(connectionMaker());
+    }
+
+    @Bean
+    public ConnectionMaker connectionMaker() {
+        return new CountingConnectionMaker(realConnectionMaker());
+    }
+
+    @Bean
+    public ConnectionMaker realConnectionMaker() {
+        return new DConnectionMaker();
+    }
+}
+```
+
+DB 연결횟수를 테스트하는 오브젝트에서 사용할 새로운 팩토리 오브젝트를 만든다.
+
+<br />
+
+```java
+public class UserDaoConnectionCountingTest {
+
+    public static void main(String[] args) throws SQLException {
+        ApplicationContext ac = new AnnotationConfigApplicationContext(CountingDaoFactory.class);
+        UserDao dao = ac.getBean("userDao", UserDao.class);
+
+        //Dao 사용 코드
+        //...
+
+        CountingConnectionMaker ccm = ac.getBean("connectionMaker", CountingConnectionMaker.class);
+        System.out.println("Connection Counter = " + ccm.getCounter());
+    }
+
+}
+```
+
+새로운 설정정보를 사용하는 테스트 오브젝트를 만든다. 이렇게 DI를 적용하면 기존의 코드를 수정하지 않고도 새로운 부가기능을 추가할 수 있다.
 
 <br />

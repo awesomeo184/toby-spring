@@ -4,17 +4,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class UserDao {
 
-    private ConnectionMaker connectionMaker;
+    private DataSource dataSource;
 
-    public void setConnectionMaker(ConnectionMaker connectionMaker) {
-        this.connectionMaker = connectionMaker;
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public void add(User user) throws SQLException {
-        Connection con = connectionMaker.makeConnection();
+        Connection con = dataSource.getConnection();
 
         PreparedStatement ps = con
             .prepareStatement("insert into users (id, name, password) values (?,?,?)");
@@ -30,7 +31,7 @@ public class UserDao {
     }
 
     public User get(String id) throws SQLException {
-        Connection con = connectionMaker.makeConnection();
+        Connection con = dataSource.getConnection();
 
         PreparedStatement ps = con
             .prepareStatement("select * from users where id = ?");

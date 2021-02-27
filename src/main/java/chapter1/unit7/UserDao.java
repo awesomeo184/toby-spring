@@ -1,4 +1,4 @@
-package chapter1.unit5;
+package chapter1.unit7;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

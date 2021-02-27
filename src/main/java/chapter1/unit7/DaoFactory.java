@@ -1,4 +1,4 @@
-package chapter1.unit5;
+package chapter1.unit7;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -743,7 +743,7 @@ UserDao는 ConnectionMaker 인터페이스에 의존하고 있으므로, UserDao
 수정해야한다. DI 방식을 적용할 경우, DB 교체를 위해 수정해야할 코드는 단 한 줄이다.
 
 ```java
-    @Bean
+@Bean
 public ConnectionMaker connectionMaker(){
     return new H2ConnectionMaker();
     }
@@ -752,7 +752,7 @@ public ConnectionMaker connectionMaker(){
 ↓
 
 ```java
-    @Bean
+@Bean
 public ConnectionMaker connectionMaker(){
     return new OracleConnectionMaker();
     }
@@ -794,8 +794,7 @@ public class CountingConnectionMaker implements ConnectionMaker {
 ```java
 
 @Configuration
-public class CountingDaoFactory {
-
+public class CountingDaoFactory { 
     @Bean
     public UserDao userDao() {
         return new UserDao(connectionMaker());
@@ -837,3 +836,172 @@ public class UserDaoConnectionCountingTest {
 새로운 설정정보를 사용하는 테스트 오브젝트를 만든다. 이렇게 DI를 적용하면 기존의 코드를 수정하지 않고도 새로운 부가기능을 추가할 수 있다.
 
 <br />
+
+### 1.8 XML을 이용한 설정
+
+스프링은 다양한 설정정보 형식을 지원한다. 지금까지 애노테이션을 이용한 자바 코드로 설정정보를 구성했지만 XML 파일로도 가능하다.
+요즘 현업의 신규 서비스들은 거의 boot 기반이므로 XML을 사용하진 않지만 오래된 시스템에서는 여전히 XML을 이용한 설정정보 구성을 사용하고 있기 때문에
+기본적인 내용은 알아두는 것이 도움이 된다.
+
+DI 정보가 담긴 XML 파일은 <beans>를 루트 엘리먼트로 사용한다. <beans> 안에는 여러 개의 <bean>을 정의할 수 있다.
+@Configuration은 <beans>, @Bean은 <bean>에 대응한다고 보면 된다.
+
+하나의 @Bean 메서드를 통해 얻을 수 있는 빈의 DI 정보는 다음 세 가지다.
+
+* 빈의 이름: @Bean 메서드 이름이 빈의 이름이다. 이 이름은 getBean 메서드에서 사용된다.
+* 빈의 클래스: 빈 오브젝트를 어떤 클래스를 이용해서 만들지를 정의한다.
+* 빈의 의존 오브젝트: 빈의 생성자나 수정자 메서드를 통해 의존 오브젝트를 넣어준다.
+
+자바 코드 설정과 XML 설정은 다음과 같이 대응된다.
+
+| |자바 코드 설정정보|XML 설정정보|
+|---|---|---|
+|빈 설정파일|@Configuration|<beans>|
+|빈의 이름|@Bean methodName()|<bean id="methodName"|
+|빈의 클래스|return new BeanClass();|class="a.b.c... BeanClass"|
+
+수정자 메서드를 통해 의존관계를 주입한 경우는 <property> 태그를 이용한다.
+
+```java
+public class UserDao {
+
+    private ConnectionMaker connectionMaker;
+
+    public void setConnectionMaker(ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
+    ...
+}
+```
+
+<br />
+
+```java
+@Configuration
+public class DaoFactory {
+
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao();
+        userDao.setConnectionMaker(connectionMaker());
+        return userDao;
+    }
+    ...
+}
+```
+
+```xml
+  <bean id="userDao" class="chapter1.unit8.UserDao">
+    <property name="connectionMaker" ref="connectionMaker" />
+  </bean>
+```
+이때 `name`은 set을 뺀 수정자 메서드의 이름이고 `ref`는 주입할 오브젝트를 정의한 빈의 ID이다.
+
+<br />
+
+애플리케이션 컨텍스트가 사용하는 XML 설정파일의 이름은 관례적으로 `applicationContext.xml`이라고 만든다.
+
+```java
+public class UserDaoTest {
+
+    public static void main(String[] args) throws SQLException {
+
+        ApplicationContext ac = new GenericXmlApplicationContext(
+            "chapter1.unit8/applicationContext.xml");
+        
+        ...
+    }
+}
+```
+
+XML을 이용한 애플리케이션 컨텍스트는 `GenericXmlApplicationContext`로 생성하며, 파라미터에 설정정보 파일의 경로를 넘겨준다.
+
+<br />
+
+**DataSource 인터페이스 적용**
+
+지금까지 DB 커넥션을 생성해주는 기능을 ConnectionMaker라는 인터페이스로 정의해서 사용했지만, 사실 자바에서는 DB 커넥션을 가져오는 오브젝트의 기능을 
+추상화해서 비슷한 용도로 사용할 수 있게 만들어진 DataSource라는 인터페이스가 이미 존재한다.
+
+일반적으로 DataSource를 구현해서 DB 커넥션을 제공하는 클래스를 만들 일은 거의 없다. 이미 다양한 방법으로 DB 연결과 풀링 기능을 갖춘 많은 DataSource 구현체들이 존재하므로
+우리는 이를 가져다 쓰기만 하면 된다.
+
+UserDao가 ConnectionMaker 대신 DataSource를 사용하도록 리팩토링 해보자.
+
+```java
+public class UserDao {
+
+    private DataSource dataSource;
+
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public void add(User user) throws SQLException {
+        Connection con = dataSource.getConnection();
+        ...
+    }
+    
+    ...
+}
+```
+
+다음은 DataSource 구현 클래스가 필요하다. 스프링이 제공해주는 DataSource 구현 클래스 중에 테스트 환경에서 간단히 사용할 수 있는
+SimpleDriverDataSource라는 것이 있다. 이 클래스를 사용하도록 DI를 재구성한다.
+
+```java
+@Configuration
+public class DaoFactory {
+
+    @Bean
+    public DataSource dataSource() {
+        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+
+        dataSource.setDriverClass(com.mysql.cj.jdbc.Driver.class);
+        dataSource.setUrl("jdbc:mysql://localhost:3306/spring");
+        dataSource.setUsername("root");
+        dataSource.setPassword("****");
+
+        return dataSource;
+    }
+
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao();
+        userDao.setDataSource(dataSource());
+        return userDao;
+    }
+    
+    ...
+}
+```
+
+이번에는 DaoFactory가 아닌 XML 설정 방식으로 변경해보자.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+    <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>
+    <property name="url" value="jdbc:mysql://localhost:3306/spring"/>
+    <property name="username" value="root"/>
+    <property name="password" value="****"/>
+  </bean>
+
+  <bean id="userDao" class="chapter1.unit8.UserDao">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+</beans>
+```
+
+### 1장 정리
+
+1장에서는 사용자 정보를 DB에 등록하거나 아이디로 조회하는 기능을 가진 간단한 DAO 코드를 만들고 문제점을 살펴본 뒤, 이를 다양한 방법과 패턴, 원칙,
+IoC/DI 프레임워크까지 적용해서 개선해왔다.
+
+1장을 끝내기 전에, 스프링이란 '어떻게 오브젝트가 설계되고, 만들어지고, 어떻게 관계를 맺고 사용되는지에 관심을 갖는 프레임워크'라는 사실을 꼭 기억해두자.
+**스프링의 관심은 오브젝트와 그 관계다.** 하지만 오브젝트를 어떻게 설계하고, 분리하고, 개선하고, 어떤 의존관계를 가질지 결정하는 일은 스프링이 아니라 개발자의 역할이다.
+스프링은 단지 원칙을 잘 따르는 설계를 적용하려고 할 때 필연적으로 등장하는 번거로운 작업을 편하게 할 수 있도록 도와주는 도구일 뿐임을 잊지 말자.

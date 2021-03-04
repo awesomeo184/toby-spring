@@ -18,6 +18,9 @@ class UserDaoTest {
 
         UserDao dao = ac.getBean("userDao", UserDao.class);
 
+        dao.deleteAll();
+        assertThat(dao.getCount()).isEqualTo(0);
+
         User user = new User();
         user.setId("gyumee");
         user.setName("박성철");
@@ -27,7 +30,10 @@ class UserDaoTest {
 
         User user2 = dao.get(user.getId());
 
+        assertThat(dao.getCount()).isEqualTo(1);
+
         assertThat(user2.getName()).isEqualTo(user.getName());
         assertThat(user2.getPassword()).isEqualTo(user.getPassword());
+
     }
 }

@@ -18,22 +18,50 @@ class UserDaoTest {
 
         UserDao dao = ac.getBean("userDao", UserDao.class);
 
+        User user1 = new User("awesome", "정수현", "HIhi");
+        User user2 = new User("whiteship", "백기선", "spring");
+
+
         dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
 
-        User user = new User();
-        user.setId("gyumee");
-        user.setName("박성철");
-        user.setPassword("springno1");
 
-        dao.add(user);
+        dao.add(user1);
+        dao.add(user2);
+        assertThat(dao.getCount()).isEqualTo(2);
 
-        User user2 = dao.get(user.getId());
+        User getUser1 = dao.get(user1.getId());
+        assertThat(getUser1.getName()).isEqualTo(user1.getName());
+        assertThat(getUser1.getPassword()).isEqualTo(user1.getPassword());
 
+        User getUser2 = dao.get(user2.getId());
+        assertThat(getUser2.getName()).isEqualTo(user2.getName());
+        assertThat(getUser2.getPassword()).isEqualTo(user2.getPassword());
+    }
+
+    @Test
+    @DisplayName("레코드 수를 잘 세는지")
+    void count() throws SQLException {
+        ApplicationContext ac = new GenericXmlApplicationContext(
+            "chapter2.unit2/applicationContext.xml");
+
+        UserDao dao = ac.getBean("userDao", UserDao.class);
+
+        User user1 = new User("awesome", "정수현", "hi");
+        User user2 = new User("whiteship", "백기선", "developer");
+        User user3 = new User("toby", "이일민", "springno1");
+
+        dao.deleteAll();
+        assertThat(dao.getCount()).isEqualTo(0);
+
+        dao.add(user1);
         assertThat(dao.getCount()).isEqualTo(1);
 
-        assertThat(user2.getName()).isEqualTo(user.getName());
-        assertThat(user2.getPassword()).isEqualTo(user.getPassword());
+        dao.add(user2);
+        assertThat(dao.getCount()).isEqualTo(2);
+
+        dao.add(user3);
+        assertThat(dao.getCount()).isEqualTo(3);
 
     }
 }

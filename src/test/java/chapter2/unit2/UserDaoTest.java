@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 class UserDaoTest {
 
@@ -63,5 +64,21 @@ class UserDaoTest {
         dao.add(user3);
         assertThat(dao.getCount()).isEqualTo(3);
 
+    }
+
+    @Test
+    @DisplayName("전달된 id가 존재하지 않는 경우")
+    void getUserFailure() throws SQLException {
+        ApplicationContext ac = new GenericXmlApplicationContext(
+            "chapter2.unit2/applicationContext.xml");
+
+        UserDao dao = ac.getBean("userDao", UserDao.class);
+
+        dao.deleteAll();
+        assertThat(dao.getCount()).isEqualTo(0);
+
+        assertThatThrownBy(() -> {
+            dao.get("unknownId");
+        }).isInstanceOf(EmptyResultDataAccessException.class);
     }
 }

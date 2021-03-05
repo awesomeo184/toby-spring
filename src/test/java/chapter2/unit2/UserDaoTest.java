@@ -3,25 +3,38 @@ package chapter2.unit2;
 import static org.assertj.core.api.Assertions.*;
 
 import java.sql.SQLException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+@TestInstance(Lifecycle.PER_CLASS)
 class UserDaoTest {
+    private UserDao dao;
+    private User user1;
+    private User user2;
+    private User user3;
+
+    @BeforeAll
+    void setUp() {
+        ApplicationContext ac = new GenericXmlApplicationContext(
+            "chapter2.unit2/applicationContext.xml");
+
+        dao = ac.getBean("userDao", UserDao.class);
+
+        user1 = new User("awesome", "정수현", "HIhi");
+        user2 = new User("whiteship", "백기선", "spring");
+        user3 = new User("toby", "이일민", "springno1");
+
+    }
 
     @Test
     @DisplayName("DB에 데이터 저장하고 가져오기가 잘 되는지")
     void addAndGet() throws SQLException {
-        ApplicationContext ac = new GenericXmlApplicationContext(
-            "chapter2.unit2/applicationContext.xml");
-
-        UserDao dao = ac.getBean("userDao", UserDao.class);
-
-        User user1 = new User("awesome", "정수현", "HIhi");
-        User user2 = new User("whiteship", "백기선", "spring");
-
 
         dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
@@ -43,14 +56,7 @@ class UserDaoTest {
     @Test
     @DisplayName("레코드 수를 잘 세는지")
     void count() throws SQLException {
-        ApplicationContext ac = new GenericXmlApplicationContext(
-            "chapter2.unit2/applicationContext.xml");
 
-        UserDao dao = ac.getBean("userDao", UserDao.class);
-
-        User user1 = new User("awesome", "정수현", "hi");
-        User user2 = new User("whiteship", "백기선", "developer");
-        User user3 = new User("toby", "이일민", "springno1");
 
         dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
@@ -69,10 +75,6 @@ class UserDaoTest {
     @Test
     @DisplayName("전달된 id가 존재하지 않는 경우")
     void getUserFailure() throws SQLException {
-        ApplicationContext ac = new GenericXmlApplicationContext(
-            "chapter2.unit2/applicationContext.xml");
-
-        UserDao dao = ac.getBean("userDao", UserDao.class);
 
         dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);

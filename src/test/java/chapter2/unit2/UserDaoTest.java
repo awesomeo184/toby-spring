@@ -3,40 +3,44 @@ package chapter2.unit2;
 import static org.assertj.core.api.Assertions.*;
 
 import java.sql.SQLException;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@TestInstance(Lifecycle.PER_CLASS)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(locations = "/chapter2.unit2/applicationContext.xml")
 class UserDaoTest {
+    @Autowired
+    private ApplicationContext ac;
+
+    @Autowired
     private UserDao dao;
+
     private User user1;
     private User user2;
     private User user3;
 
-    @BeforeAll
-    void setUp() {
-        ApplicationContext ac = new GenericXmlApplicationContext(
-            "chapter2.unit2/applicationContext.xml");
 
-        dao = ac.getBean("userDao", UserDao.class);
+    @BeforeEach
+    void setUp() throws SQLException {
 
         user1 = new User("awesome", "정수현", "HIhi");
         user2 = new User("whiteship", "백기선", "spring");
         user3 = new User("toby", "이일민", "springno1");
 
+        dao.deleteAll();
     }
 
     @Test
     @DisplayName("DB에 데이터 저장하고 가져오기가 잘 되는지")
     void addAndGet() throws SQLException {
 
-        dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
 
 
@@ -58,7 +62,6 @@ class UserDaoTest {
     void count() throws SQLException {
 
 
-        dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
 
         dao.add(user1);
@@ -76,7 +79,6 @@ class UserDaoTest {
     @DisplayName("전달된 id가 존재하지 않는 경우")
     void getUserFailure() throws SQLException {
 
-        dao.deleteAll();
         assertThat(dao.getCount()).isEqualTo(0);
 
         assertThatThrownBy(() -> {
@@ -84,3 +86,5 @@ class UserDaoTest {
         }).isInstanceOf(EmptyResultDataAccessException.class);
     }
 }
+
+

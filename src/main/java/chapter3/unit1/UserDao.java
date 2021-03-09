@@ -60,29 +60,61 @@ public class UserDao {
     }
 
     public void deleteAll() throws SQLException {
-        Connection con = dataSource.getConnection();
+        Connection con = null;
+        PreparedStatement ps = null;
 
-        PreparedStatement ps = con.prepareStatement("delete from users");
-        ps.executeUpdate();
+        try {
+            con = dataSource.getConnection();
+            ps = con.prepareStatement("delete from users");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) { }
+            }
 
-        ps.close();
-        con.close();
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {}
+            }
+        }
     }
 
     public int getCount() throws SQLException {
-        Connection con = dataSource.getConnection();
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
 
-        PreparedStatement ps = con.prepareStatement("select count(*) from users");
+        try {
+            con = dataSource.getConnection();
+            ps = con.prepareStatement("select count(*) from users");
 
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        int count = rs.getInt(1);
-
-        rs.close();
-        ps.close();
-        con.close();
-
-        return count;
+            rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {}
+            }
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {}
+            }
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {}
+            }
+        }
     }
 
 }

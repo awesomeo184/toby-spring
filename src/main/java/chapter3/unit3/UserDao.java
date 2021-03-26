@@ -15,9 +15,21 @@ public class UserDao {
         this.dataSource = dataSource;
     }
 
-    public void add(User user) throws SQLException {
-        AddStatement stmt = new AddStatement(user);
-        jdbcContextWithStatementStrategy(stmt);
+    public void add(final User user) throws SQLException {
+
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con
+                    .prepareStatement("insert into users (id, name, password) values (?,?,?)");
+
+                ps.setString(1, user.getId());
+                ps.setString(2, user.getName());
+                ps.setString(3, user.getPassword());
+
+                return ps;
+            }
+        });
     }
 
     public User get(String id) throws SQLException {
@@ -79,8 +91,12 @@ public class UserDao {
     }
 
     public void deleteAll() throws SQLException {
-        StatementStrategy stmt = new DeleteAllStatement();
-        jdbcContextWithStatementStrategy(stmt);
+        jdbcContextWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection con) throws SQLException {
+                return con.prepareStatement("delete from users");
+            }
+        });
     }
 
 
